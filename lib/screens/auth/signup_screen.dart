@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
-import '../dashboard_screen.dart';
+import 'login_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -16,7 +16,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _authService = AuthService();
-  
+
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
@@ -48,15 +48,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account created successfully! Please check your email to verify your account.'),
+            content: Text(
+                'Account created successfully! Please sign in to continue.'),
             backgroundColor: Colors.green,
-            duration: Duration(seconds: 5),
+            duration: Duration(seconds: 3),
           ),
         );
 
-        // Navigate to dashboard
+        // Navigate to login screen
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
         );
       }
     } catch (e) {
@@ -112,7 +113,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // App Title
                   const Text(
                     'Life Growth',
@@ -131,7 +132,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
                   const SizedBox(height: 48),
-                  
+
                   // Sign Up Form
                   Container(
                     padding: const EdgeInsets.all(24),
@@ -161,7 +162,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             textAlign: TextAlign.center,
                           ),
                           const SizedBox(height: 24),
-                          
+
                           // Full Name Field
                           TextFormField(
                             controller: _fullNameController,
@@ -190,7 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Email Field
                           TextFormField(
                             controller: _emailController,
@@ -223,7 +224,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Password Field
                           TextFormField(
                             controller: _passwordController,
@@ -236,7 +237,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  _obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                   color: Color(0xFF24B0BA),
                                 ),
                                 onPressed: () {
@@ -267,7 +270,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Confirm Password Field
                           TextFormField(
                             controller: _confirmPasswordController,
@@ -280,12 +283,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscureConfirmPassword ? Icons.visibility : Icons.visibility_off,
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                   color: Color(0xFF24B0BA),
                                 ),
                                 onPressed: () {
                                   setState(() {
-                                    _obscureConfirmPassword = !_obscureConfirmPassword;
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword;
                                   });
                                 },
                               ),
@@ -311,7 +317,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             },
                           ),
                           const SizedBox(height: 24),
-                          
+
                           // Sign Up Button
                           ElevatedButton(
                             onPressed: _isLoading ? null : _signUp,
@@ -341,7 +347,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                           ),
                           const SizedBox(height: 16),
-                          
+
                           // Sign In Link
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,

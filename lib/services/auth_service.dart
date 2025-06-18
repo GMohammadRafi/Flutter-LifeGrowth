@@ -7,8 +7,14 @@ class AuthService {
   // Get current user
   User? get currentUser => _client.auth.currentUser;
 
+  // Get current session
+  Session? get currentSession => _client.auth.currentSession;
+
   // Check if user is signed in
   bool get isSignedIn => currentUser != null;
+
+  // Check if session is valid
+  bool get hasValidSession => currentSession != null;
 
   // Sign up with email and password
   Future<AuthResponse> signUp({
@@ -64,6 +70,35 @@ class AuthService {
 
   // Listen to auth state changes
   Stream<AuthState> get authStateChanges => _client.auth.onAuthStateChange;
+
+  // Refresh session
+  Future<AuthResponse?> refreshSession() async {
+    try {
+      final response = await _client.auth.refreshSession();
+      return response;
+    } catch (e) {
+      // If refresh fails, the session is likely invalid
+      return null;
+    }
+  }
+
+  // Initialize session (useful for app startup)
+  Future<Session?> initializeSession() async {
+    try {
+      // Get the current session
+      final session = _client.auth.currentSession;
+
+      // If session exists but is expired, try to refresh it
+      if (session != null && session.isExpired) {
+        final refreshResponse = await refreshSession();
+        return refreshResponse?.session;
+      }
+
+      return session;
+    } catch (e) {
+      return null;
+    }
+  }
 
   // Update user profile
   Future<UserResponse> updateProfile({
