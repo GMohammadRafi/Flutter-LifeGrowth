@@ -47,7 +47,7 @@ class EnhancedTaskService {
       if (userId == null) throw Exception('User not authenticated');
 
       final response = await _client
-          .from('enhanced_tasks')
+          .from('tasks')
           .select('''
             *,
             categories(*),
@@ -73,8 +73,7 @@ class EnhancedTaskService {
       final taskData = task.toInsertJson();
       taskData['user_id'] = userId;
 
-      final response =
-          await _client.from('enhanced_tasks').insert(taskData).select('''
+      final response = await _client.from('tasks').insert(taskData).select('''
             *,
             categories(*),
             schedule_types(*)
@@ -91,7 +90,7 @@ class EnhancedTaskService {
       if (task.id == null) throw Exception('Task ID is required for update');
 
       final response = await _client
-          .from('enhanced_tasks')
+          .from('tasks')
           .update(task.toInsertJson())
           .eq('id', task.id!)
           .select('''
@@ -108,42 +107,85 @@ class EnhancedTaskService {
 
   Future<void> deleteTask(String taskId) async {
     try {
-      await _client.from('enhanced_tasks').delete().eq('id', taskId);
+      await _client.from('tasks').delete().eq('id', taskId);
     } catch (e) {
       rethrow;
     }
   }
 
-  // Task Completions
+  // Task Completions - Simplified version that works around auth issues
   Future<TaskCompletionModel> markTaskComplete(
       String taskId, DateTime date) async {
     try {
-      final completion = TaskCompletionModel(
-        taskId: taskId,
-        completionDate: date,
-        isCompleted: true,
-      );
+      print('DEBUG: Attempting to mark task complete (simplified)');
+      print('  Task ID: $taskId');
+      print('  Date: $date');
 
+      // Simplified approach - just check if task exists (no user validation for now)
+      final taskExists = await _client
+          .from('tasks')
+          .select('id, name')
+          .eq('id', taskId)
+          .maybeSingle();
+
+      if (taskExists == null) {
+        print('  ERROR: Task $taskId not found in database');
+
+        // Let's see what tasks DO exist
+        final allTasks =
+            await _client.from('tasks').select('id, name').limit(5);
+
+        print('  Available tasks:');
+        for (final task in allTasks) {
+          print('    - ${task['id']}: ${task['name']}');
+        }
+
+        throw Exception('Task not found with ID: $taskId');
+      }
+
+      print('  Task found: ${taskExists['name']}');
+
+      // Create completion record (simplified)
+      final completionData = {
+        'task_id': taskId,
+        'completion_date': date.toIso8601String().split('T')[0], // Date only
+        'is_completed': true,
+      };
+
+      print('  Inserting completion data: $completionData');
+
+      // Try to insert/update the completion
       final response = await _client
           .from('task_completions')
-          .upsert(completion.toInsertJson())
+          .upsert(completionData)
           .select()
           .single();
 
+      print('  Success! Completion created: ${response['id']}');
       return TaskCompletionModel.fromJson(response);
     } catch (e) {
+      print('ERROR in markTaskComplete:');
+      print('  Task ID: $taskId');
+      print('  Date: $date');
+      print('  Error: $e');
+      print('  Error type: ${e.runtimeType}');
       rethrow;
     }
   }
 
   Future<void> markTaskIncomplete(String taskId, DateTime date) async {
     try {
+      // Verify user authentication
+      final userId = _client.auth.currentUser?.id;
+      if (userId == null) throw Exception('User not authenticated');
+
       await _client
           .from('task_completions')
           .delete()
           .eq('task_id', taskId)
           .eq('completion_date', date.toIso8601String().split('T')[0]);
     } catch (e) {
+      print('Error in markTaskIncomplete: $e');
       rethrow;
     }
   }
@@ -216,7 +258,7 @@ class EnhancedTaskService {
           .split('T')[0];
 
       final response = await _client
-          .from('enhanced_tasks')
+          .from('tasks')
           .select('''
             *,
             categories(*),
