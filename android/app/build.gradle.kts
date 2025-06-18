@@ -6,9 +6,9 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myapp"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    namespace = "com.example.lifegrowth" // Flutter requires namespace to be set to "com.example.myapp" for Android builds.
+    compileSdk = 34
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -20,14 +20,11 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.myapp"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
-        versionName = flutter.versionName
+        applicationId = "com.example.lifegrowth" // Flutter requires applicationId to be set to "com.example.myapp" for Android builds.
+        minSdk = 21 // Flutter requires minSdk 21 or higher.
+        targetSdk = 34 // Flutter requires targetSdk 34 or higher.
+        versionCode = 1
+        versionName = "1.0"
     }
 
     buildTypes {
