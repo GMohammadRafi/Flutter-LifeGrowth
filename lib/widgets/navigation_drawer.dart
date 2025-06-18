@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/screens/dashboard_screen.dart';
-import 'package:myapp/screens/task_list_screen.dart';
-import 'package:myapp/screens/health_screen.dart';
-import 'package:myapp/screens/habits_screen.dart';
-import 'package:myapp/screens/suggestions_screen.dart';
+import 'package:lifegrowth/screens/dashboard_screen.dart';
+import 'package:lifegrowth/screens/task_list_screen.dart';
+import 'package:lifegrowth/screens/health_screen.dart';
+import 'package:lifegrowth/screens/habits_screen.dart';
+import 'package:lifegrowth/screens/suggestions_screen.dart';
 
 class AppNavigationDrawer extends StatelessWidget {
   final String currentPage; // Add the currentPage parameter

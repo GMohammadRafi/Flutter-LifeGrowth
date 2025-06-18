@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:myapp/screens/auth/auth_wrapper.dart';
-import 'package:myapp/config/supabase_config.dart';
-import 'package:myapp/utils/env_validator.dart';
+import 'package:lifegrowth/screens/auth/auth_wrapper.dart';
+import 'package:lifegrowth/config/supabase_config.dart';
+import 'package:lifegrowth/utils/env_validator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

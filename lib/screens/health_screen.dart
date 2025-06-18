@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:myapp/widgets/navigation_drawer.dart';
+import 'package:lifegrowth/widgets/navigation_drawer.dart';
 
 class HealthScreen extends StatelessWidget {
   const HealthScreen({super.key});
