@@ -8,8 +8,8 @@ import 'package:myapp/screens/suggestions_screen.dart';
 class AppNavigationDrawer extends StatelessWidget {
   final String currentPage; // Add the currentPage parameter
 
-  const AppNavigationDrawer({Key? key, required this.currentPage}) : super(key: key);
-  
+  const AppNavigationDrawer({super.key, required this.currentPage});
+
   @override
   Widget build(BuildContext context) {
     return Drawer(
@@ -36,7 +36,7 @@ class AppNavigationDrawer extends StatelessWidget {
               if (currentPage != 'Dashboard') {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) =>  DashboardScreen()),
+                  MaterialPageRoute(builder: (context) => DashboardScreen()),
                 );
               } else {
                 Navigator.pop(context); // Close the drawer

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:myapp/widgets/navigation_drawer.dart';
+
 class HabitsScreen extends StatelessWidget {
-  const HabitsScreen({Key? key}) : super(key: key);
+  const HabitsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -9,7 +10,7 @@ class HabitsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Habits'),
       ),
-       drawer: AppNavigationDrawer(currentPage: 'Habits'),
+      drawer: AppNavigationDrawer(currentPage: 'Habits'),
       body: const Center(
         child: Text('Habits Screen'),
       ),
