@@ -35,11 +35,8 @@ class TaskService {
       final taskData = task.toJson();
       taskData['user_id'] = userId;
 
-      final response = await _client
-          .from(_tableName)
-          .insert(taskData)
-          .select()
-          .single();
+      final response =
+          await _client.from(_tableName).insert(taskData).select().single();
 
       return TaskModel.fromJson(response);
     } catch (e) {
@@ -52,11 +49,12 @@ class TaskService {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) throw Exception('User not authenticated');
+      if (task.id == null) throw Exception('Task ID is required for update');
 
       final response = await _client
           .from(_tableName)
           .update(task.toJson())
-          .eq('id', task.id)
+          .eq('id', task.id!)
           .eq('user_id', userId)
           .select()
           .single();
@@ -98,7 +96,7 @@ class TaskService {
           .single();
 
       final task = TaskModel.fromJson(currentTask);
-      
+
       // Toggle completion
       final updatedTask = task.copyWith(
         isCompleted: !task.isCompleted,

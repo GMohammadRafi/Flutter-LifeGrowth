@@ -37,11 +37,8 @@ class HabitService {
       final habitData = habit.toJson();
       habitData['user_id'] = userId;
 
-      final response = await _client
-          .from(_tableName)
-          .insert(habitData)
-          .select()
-          .single();
+      final response =
+          await _client.from(_tableName).insert(habitData).select().single();
 
       return HabitModel.fromJson(response);
     } catch (e) {
@@ -54,11 +51,12 @@ class HabitService {
     try {
       final userId = _client.auth.currentUser?.id;
       if (userId == null) throw Exception('User not authenticated');
+      if (habit.id == null) throw Exception('Habit ID is required for update');
 
       final response = await _client
           .from(_tableName)
           .update(habit.toJson())
-          .eq('id', habit.id)
+          .eq('id', habit.id!)
           .eq('user_id', userId)
           .select()
           .single();
@@ -92,7 +90,8 @@ class HabitService {
       if (userId == null) throw Exception('User not authenticated');
 
       final today = DateTime.now();
-      final dateString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final dateString =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       // Check if already completed today
       final existing = await _client
@@ -132,7 +131,8 @@ class HabitService {
       if (userId == null) throw Exception('User not authenticated');
 
       final today = DateTime.now();
-      final dateString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final dateString =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       await _client
           .from(_trackingTableName)
@@ -152,7 +152,8 @@ class HabitService {
       if (userId == null) throw Exception('User not authenticated');
 
       final today = DateTime.now();
-      final dateString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      final dateString =
+          '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
 
       final response = await _client
           .from(_trackingTableName)
@@ -191,13 +192,15 @@ class HabitService {
       // Calculate streak
       int streak = 0;
       final today = DateTime.now();
-      
+
       for (int i = 0; i < 30; i++) {
         final checkDate = today.subtract(Duration(days: i));
-        final dateString = '${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
-        
-        final completed = response.any((record) => record['date'] == dateString);
-        
+        final dateString =
+            '${checkDate.year}-${checkDate.month.toString().padLeft(2, '0')}-${checkDate.day.toString().padLeft(2, '0')}';
+
+        final completed =
+            response.any((record) => record['date'] == dateString);
+
         if (completed) {
           streak++;
         } else {
@@ -227,7 +230,8 @@ class HabitService {
 
       if (response.isEmpty) return 0.0;
 
-      final completedDays = response.where((record) => record['completed'] == true).length;
+      final completedDays =
+          response.where((record) => record['completed'] == true).length;
       return completedDays / 30.0;
     } catch (e) {
       return 0.0;
