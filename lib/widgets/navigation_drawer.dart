@@ -16,16 +16,43 @@ class AppNavigationDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          const DrawerHeader(
-            decoration: BoxDecoration(
-              color: Colors.blue, // You can customize the header color
-            ),
-            child: Text(
-              'Life Growth',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
+          DrawerHeader(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Color(0xFF73C7E3), // Light blue
+                  Color(0xFF24B0BA), // Teal
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.eco,
+                  color: Colors.white,
+                  size: 40,
+                ),
+                SizedBox(height: 8),
+                Text(
+                  'Life Growth',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Your Personal Journey',
+                  style: TextStyle(
+                    color: Colors.white70,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
           ListTile(

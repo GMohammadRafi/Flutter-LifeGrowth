@@ -14,14 +14,33 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Life Growth',
       theme: ThemeData(
-        primaryColor: const Color(
-            0xFF73C7E3), // Primary color (deprecated, use colorScheme.primary)
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF73C7E3),
+          primary: const Color(0xFF73C7E3), // Light blue
+          secondary: const Color(0xFF24B0BA), // Teal
+          surface: const Color(0xFFFFF9F0), // Warm off-white background
+        ),
+        scaffoldBackgroundColor:
+            const Color(0xFFFFF9F0), // Warm off-white background
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF73C7E3), // Light blue app bar
+          foregroundColor: Colors.white,
+          elevation: 2,
+        ),
         textTheme: const TextTheme(
           titleLarge: TextStyle(
-              fontSize: 20.0,
-              fontWeight:
-                  FontWeight.bold), // Use titleLarge instead of headline6
+            fontSize: 20.0,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF24B0BA), // Teal for titles
+          ),
+          bodyLarge: TextStyle(
+            color: Color(0xFF333333), // Dark text for readability
+          ),
+          bodyMedium: TextStyle(
+            color: Color(0xFF333333), // Dark text for readability
+          ),
         ),
+        useMaterial3: true,
       ),
       home: DashboardScreen(),
     );
