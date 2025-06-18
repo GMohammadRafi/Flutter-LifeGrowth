@@ -1,4 +1,5 @@
--- Life Growth App Database Schema for Supabase
+-- Consolidated Life Growth App Database Schema for Supabase
+-- This file combines all features and resolves policy naming conflicts
 -- Run these commands in your Supabase SQL Editor
 
 -- Enable Row Level Security (RLS) for all tables
@@ -37,8 +38,8 @@ INSERT INTO schedule_types (name) VALUES
     ('bi-monthly')
 ON CONFLICT (name) DO NOTHING;
 
--- 3. Enhanced Tasks Table
-CREATE TABLE IF NOT EXISTS tasks (
+-- 3. Enhanced Tasks Table (main tasks table)
+CREATE TABLE IF NOT EXISTS enhanced_tasks (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
     name TEXT NOT NULL,
@@ -54,27 +55,27 @@ CREATE TABLE IF NOT EXISTS tasks (
 -- 4. Task Completions Table (for streak tracking)
 CREATE TABLE IF NOT EXISTS task_completions (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    task_id UUID REFERENCES tasks(id) ON DELETE CASCADE NOT NULL,
+    task_id UUID REFERENCES enhanced_tasks(id) ON DELETE CASCADE NOT NULL,
     completion_date DATE NOT NULL,
     is_completed BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(task_id, completion_date)
 );
 
--- Enable RLS for tasks
-ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+-- Enable RLS for enhanced_tasks
+ALTER TABLE enhanced_tasks ENABLE ROW LEVEL SECURITY;
 
--- Create policy for tasks - users can only access their own tasks
-CREATE POLICY "Users can view their own tasks" ON tasks
+-- Create policies for enhanced_tasks - users can only access their own tasks
+CREATE POLICY "Users can view their own enhanced tasks" ON enhanced_tasks
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert their own tasks" ON tasks
+CREATE POLICY "Users can insert their own enhanced tasks" ON enhanced_tasks
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own tasks" ON tasks
+CREATE POLICY "Users can update their own enhanced tasks" ON enhanced_tasks
     FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can delete their own tasks" ON tasks
+CREATE POLICY "Users can delete their own enhanced tasks" ON enhanced_tasks
     FOR DELETE USING (auth.uid() = user_id);
 
 -- Enable RLS for task_completions
@@ -84,40 +85,40 @@ ALTER TABLE task_completions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view their own task completions" ON task_completions
     FOR SELECT USING (
         EXISTS (
-            SELECT 1 FROM tasks
-            WHERE tasks.id = task_completions.task_id
-            AND tasks.user_id = auth.uid()
+            SELECT 1 FROM enhanced_tasks
+            WHERE enhanced_tasks.id = task_completions.task_id
+            AND enhanced_tasks.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can insert their own task completions" ON task_completions
     FOR INSERT WITH CHECK (
         EXISTS (
-            SELECT 1 FROM tasks
-            WHERE tasks.id = task_completions.task_id
-            AND tasks.user_id = auth.uid()
+            SELECT 1 FROM enhanced_tasks
+            WHERE enhanced_tasks.id = task_completions.task_id
+            AND enhanced_tasks.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can update their own task completions" ON task_completions
     FOR UPDATE USING (
         EXISTS (
-            SELECT 1 FROM tasks
-            WHERE tasks.id = task_completions.task_id
-            AND tasks.user_id = auth.uid()
+            SELECT 1 FROM enhanced_tasks
+            WHERE enhanced_tasks.id = task_completions.task_id
+            AND enhanced_tasks.user_id = auth.uid()
         )
     );
 
 CREATE POLICY "Users can delete their own task completions" ON task_completions
     FOR DELETE USING (
         EXISTS (
-            SELECT 1 FROM tasks
-            WHERE tasks.id = task_completions.task_id
-            AND tasks.user_id = auth.uid()
+            SELECT 1 FROM enhanced_tasks
+            WHERE enhanced_tasks.id = task_completions.task_id
+            AND enhanced_tasks.user_id = auth.uid()
         )
     );
 
--- 2. Habits Table
+-- 5. Habits Table
 CREATE TABLE IF NOT EXISTS habits (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -147,7 +148,7 @@ CREATE POLICY "Users can update their own habits" ON habits
 CREATE POLICY "Users can delete their own habits" ON habits
     FOR DELETE USING (auth.uid() = user_id);
 
--- 3. Habit Tracking Table
+-- 6. Habit Tracking Table
 CREATE TABLE IF NOT EXISTS habit_tracking (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     habit_id UUID REFERENCES habits(id) ON DELETE CASCADE NOT NULL,
@@ -175,7 +176,7 @@ CREATE POLICY "Users can update their own habit tracking" ON habit_tracking
 CREATE POLICY "Users can delete their own habit tracking" ON habit_tracking
     FOR DELETE USING (auth.uid() = user_id);
 
--- 4. Health Data Table
+-- 7. Health Data Table
 CREATE TABLE IF NOT EXISTS health_data (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -208,7 +209,7 @@ CREATE POLICY "Users can update their own health data" ON health_data
 CREATE POLICY "Users can delete their own health data" ON health_data
     FOR DELETE USING (auth.uid() = user_id);
 
--- 5. User Profiles Table (optional - for additional user data)
+-- 8. User Profiles Table (optional - for additional user data)
 CREATE TABLE IF NOT EXISTS user_profiles (
     id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
     full_name TEXT,
@@ -233,11 +234,11 @@ CREATE POLICY "Users can update their own profile" ON user_profiles
     FOR UPDATE USING (auth.uid() = id);
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
-CREATE INDEX IF NOT EXISTS idx_tasks_category_id ON tasks(category_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_schedule_type_id ON tasks(schedule_type_id);
-CREATE INDEX IF NOT EXISTS idx_tasks_is_active ON tasks(is_active);
+CREATE INDEX IF NOT EXISTS idx_enhanced_tasks_user_id ON enhanced_tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_enhanced_tasks_due_date ON enhanced_tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_enhanced_tasks_category_id ON enhanced_tasks(category_id);
+CREATE INDEX IF NOT EXISTS idx_enhanced_tasks_schedule_type_id ON enhanced_tasks(schedule_type_id);
+CREATE INDEX IF NOT EXISTS idx_enhanced_tasks_is_active ON enhanced_tasks(is_active);
 
 CREATE INDEX IF NOT EXISTS idx_task_completions_task_id ON task_completions(task_id);
 CREATE INDEX IF NOT EXISTS idx_task_completions_completion_date ON task_completions(completion_date);
@@ -262,7 +263,7 @@ END;
 $$ language 'plpgsql';
 
 -- Create triggers for updated_at
-CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
+CREATE TRIGGER update_enhanced_tasks_updated_at BEFORE UPDATE ON enhanced_tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TRIGGER update_habits_updated_at BEFORE UPDATE ON habits
@@ -288,3 +289,17 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
     AFTER INSERT ON auth.users
     FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- Optional: Create a view for tasks with related data
+CREATE OR REPLACE VIEW tasks_with_details AS
+SELECT 
+    t.*,
+    c.name as category_name,
+    st.name as schedule_type_name
+FROM enhanced_tasks t
+LEFT JOIN categories c ON t.category_id = c.id
+LEFT JOIN schedule_types st ON t.schedule_type_id = st.id
+WHERE t.is_active = true;
+
+-- Grant access to the view
+GRANT SELECT ON tasks_with_details TO authenticated; 

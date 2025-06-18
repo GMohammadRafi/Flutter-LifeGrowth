@@ -1,8 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:lifegrowth/widgets/navigation_drawer.dart';
+import '../models/enhanced_task_model.dart';
+import '../services/enhanced_task_service.dart';
+import 'add_task_screen.dart';
 
-class TaskListScreen extends StatelessWidget {
+class TaskListScreen extends StatefulWidget {
   const TaskListScreen({super.key});
+
+  @override
+  State<TaskListScreen> createState() => _TaskListScreenState();
+}
+
+class _TaskListScreenState extends State<TaskListScreen> {
+  final _enhancedTaskService = EnhancedTaskService();
+  List<EnhancedTaskModel> _tasks = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTasks();
+  }
+
+  Future<void> _loadTasks() async {
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      final tasks = await _enhancedTaskService.getTasks();
+
+      setState(() {
+        _tasks = tasks;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to load tasks: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _navigateToAddTask() async {
+    final result = await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const AddTaskScreen(),
+      ),
+    );
+
+    // Reload tasks if a new task was created
+    if (result == true) {
+      _loadTasks();
+    }
+  }
+
+  Future<void> _toggleTaskCompletion(EnhancedTaskModel task) async {
+    try {
+      final today = DateTime.now();
+      final isCompleted =
+          await _enhancedTaskService.isTaskCompletedToday(task.id!);
+
+      if (isCompleted) {
+        await _enhancedTaskService.markTaskIncomplete(task.id!, today);
+      } else {
+        await _enhancedTaskService.markTaskComplete(task.id!, today);
+      }
+
+      // Show feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isCompleted
+                ? 'Task marked as incomplete'
+                : 'Task completed! Great job!',
+          ),
+          backgroundColor: isCompleted ? Colors.orange : Colors.green,
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,51 +195,110 @@ class TaskListScreen extends StatelessWidget {
 
             // Tasks list
             Expanded(
-              child: ListView(
-                children: [
-                  _buildTaskCard(
-                    title: 'Complete project proposal',
-                    description:
-                        'Finish the quarterly project proposal document',
-                    isCompleted: false,
-                    priority: 'High',
-                    dueDate: 'Today',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTaskCard(
-                    title: 'Team meeting preparation',
-                    description:
-                        'Prepare agenda and materials for tomorrow\'s meeting',
-                    isCompleted: false,
-                    priority: 'Medium',
-                    dueDate: 'Tomorrow',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTaskCard(
-                    title: 'Review code changes',
-                    description: 'Review and approve pending pull requests',
-                    isCompleted: true,
-                    priority: 'Low',
-                    dueDate: 'Yesterday',
-                  ),
-                  const SizedBox(height: 12),
-                  _buildTaskCard(
-                    title: 'Update documentation',
-                    description: 'Update API documentation with recent changes',
-                    isCompleted: false,
-                    priority: 'Medium',
-                    dueDate: 'This week',
-                  ),
-                ],
-              ),
+              child: _isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF24B0BA),
+                      ),
+                    )
+                  : _errorMessage != null
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                size: 64,
+                                color: Colors.red.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error Loading Tasks',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.red.shade700,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _errorMessage!,
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  color: Colors.red.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadTasks,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF24B0BA),
+                                  foregroundColor: Colors.white,
+                                ),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : _tasks.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.task_alt,
+                                    size: 64,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No Tasks Yet',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Tap the + button to create your first task',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _loadTasks,
+                              color: const Color(0xFF24B0BA),
+                              child: ListView.builder(
+                                itemCount: _tasks.length,
+                                itemBuilder: (context, index) {
+                                  final task = _tasks[index];
+                                  return FutureBuilder<bool>(
+                                    future: _enhancedTaskService
+                                        .isTaskCompletedToday(task.id!),
+                                    builder: (context, snapshot) {
+                                      final isCompleted =
+                                          snapshot.data ?? false;
+                                      return Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: _buildEnhancedTaskCard(
+                                            task, isCompleted),
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
             ),
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // Add new task functionality
-        },
+        onPressed: _navigateToAddTask,
         backgroundColor: const Color(0xFF24B0BA),
         child: const Icon(Icons.add, color: Colors.white),
       ),
@@ -181,132 +326,184 @@ class TaskListScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTaskCard({
-    required String title,
-    required String description,
-    required bool isCompleted,
-    required String priority,
-    required String dueDate,
-  }) {
-    Color priorityColor;
-    switch (priority) {
-      case 'High':
-        priorityColor = Colors.red;
-        break;
-      case 'Medium':
-        priorityColor = Colors.orange;
-        break;
-      case 'Low':
-        priorityColor = Colors.green;
-        break;
-      default:
-        priorityColor = Colors.grey;
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF73C7E3).withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // Completion checkbox
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted
-                      ? const Color(0xFF24B0BA)
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: isCompleted ? const Color(0xFF24B0BA) : Colors.grey,
-                    width: 2,
-                  ),
-                ),
-                child: isCompleted
-                    ? const Icon(
-                        Icons.check,
-                        color: Colors.white,
-                        size: 16,
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 12),
-
-              // Task title
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF333333),
-                    decoration: isCompleted ? TextDecoration.lineThrough : null,
-                  ),
-                ),
-              ),
-
-              // Priority indicator
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: priorityColor.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  priority,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: priorityColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-
-          // Task description
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
+  Widget _buildEnhancedTaskCard(EnhancedTaskModel task, bool isCompleted) {
+    return GestureDetector(
+      onTap: () => _toggleTaskCompletion(task),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF73C7E3).withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-          const SizedBox(height: 12),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Completion checkbox
+                Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isCompleted
+                        ? const Color(0xFF24B0BA)
+                        : Colors.transparent,
+                    border: Border.all(
+                      color:
+                          isCompleted ? const Color(0xFF24B0BA) : Colors.grey,
+                      width: 2,
+                    ),
+                  ),
+                  child: isCompleted
+                      ? const Icon(
+                          Icons.check,
+                          color: Colors.white,
+                          size: 16,
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 12),
 
-          // Due date
-          Row(
-            children: [
-              Icon(
-                Icons.schedule,
-                size: 16,
-                color: Colors.grey[500],
-              ),
-              const SizedBox(width: 4),
+                // Task title
+                Expanded(
+                  child: Text(
+                    task.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF333333),
+                      decoration:
+                          isCompleted ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                ),
+
+                // Category indicator
+                if (task.category != null)
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF73C7E3).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: const Color(0xFF73C7E3).withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      task.category!.name,
+                      style: const TextStyle(
+                        color: Color(0xFF24B0BA),
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            if (task.notes != null && task.notes!.isNotEmpty) ...[
+              const SizedBox(height: 8),
               Text(
-                dueDate,
+                task.notes!,
                 style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[500],
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                  decoration: isCompleted ? TextDecoration.lineThrough : null,
                 ),
               ),
             ],
-          ),
-        ],
+
+            const SizedBox(height: 12),
+
+            // Schedule type, due date and streak info
+            Row(
+              children: [
+                if (task.scheduleType != null) ...[
+                  Icon(
+                    Icons.repeat,
+                    size: 16,
+                    color: Colors.grey[500],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    task.scheduleType!.name,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                ],
+
+                if (task.dueDate != null) ...[
+                  Icon(
+                    Icons.schedule,
+                    size: 16,
+                    color: Colors.grey[500],
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${task.dueDate!.day}/${task.dueDate!.month}/${task.dueDate!.year}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey[500],
+                    ),
+                  ),
+                ],
+
+                const Spacer(),
+
+                // Streak indicator
+                FutureBuilder<int>(
+                  future: _enhancedTaskService.calculateStreak(task.id!),
+                  builder: (context, snapshot) {
+                    final streak = snapshot.data ?? 0;
+                    if (streak > 0) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.orange.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border:
+                              Border.all(color: Colors.orange.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department,
+                              size: 14,
+                              color: Colors.orange,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$streak',
+                              style: const TextStyle(
+                                color: Colors.orange,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
